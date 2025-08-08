@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo 'Checking out source code...'
-                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/MySpringBootApp.git'
+                git branch: 'main', url: 'https://github.com/MySpringBootApp/MySpringBootApp.git'
             }
         }
         
