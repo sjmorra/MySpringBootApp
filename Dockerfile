@@ -1,4 +1,4 @@
-  #Use OpenJDK 21 as base image for Spring Boot application
+  # Use OpenJDK 21 as base image for Spring Boot application
   # This provides a complete Java runtime environment with JDK 21
   FROM eclipse-temurin:21
 
