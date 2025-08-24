@@ -5,7 +5,6 @@ version: 0.2
 # Environment variables available during the build
 env:
   variables:
-    JAVA_HOME: "/usr/lib/jvm/java-21-amazon-corretto"
     MAVEN_OPTS: "-Dmaven.test.failure.ignore=false"
 
 # Build phases - executed in sequence
