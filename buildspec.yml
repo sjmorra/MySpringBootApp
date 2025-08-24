@@ -1,0 +1,67 @@
+# AWS CodeBuild specification file
+# This file defines the build commands and settings for CodeBuild
+version: 0.2
+
+# Environment variables available during the build
+env:
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/java-21-amazon-corretto"
+    MAVEN_OPTS: "-Dmaven.test.failure.ignore=false"
+
+# Build phases - executed in sequence
+phases:
+  # Install phase: Set up build environment
+  install:
+    runtime-versions:
+      java: corretto21  # Use Amazon Corretto 21 (LTS version)
+    commands:
+      - echo "Installing dependencies..."
+      - echo "Java version:" && java -version
+      - echo "Maven version:" && mvn -version
+
+  # Pre-build phase: Prepare for compilation
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on $(date)"
+      - echo "Downloading dependencies..."
+      - mvn dependency:resolve
+
+  # Build phase: Compile, test, and package
+  build:
+    commands:
+      - echo "Build phase started on $(date)"
+      - echo "Compiling the source code..."
+      - mvn clean compile
+      - echo "Running unit tests..."
+      - mvn test
+      - echo "Packaging the application..."
+      - mvn package -DskipTests
+      - echo "Verifying JAR file creation..."
+      - ls -la target/
+      - echo "Build completed on $(date)"
+
+  # Post-build phase: Final steps and cleanup
+  post_build:
+    commands:
+      - echo "Post-build phase started on $(date)"
+      - echo "Build completed successfully!"
+      
+# Artifacts to save after build completion
+artifacts:
+  files:
+    - target/*.jar
+    - Dockerfile
+    - '**/*'
+  name: MySpringBootApp-$(date +%Y-%m-%d-%H-%M-%S)
+  
+# Reports to generate
+reports:
+  junit:
+    files:
+      - 'target/surefire-reports/*.xml'
+    file-format: 'JUNITXML'
+    
+# Cache to speed up subsequent builds
+cache:
+  paths:
+    - '/root/.m2/**/*'  # Cache Maven dependencies
