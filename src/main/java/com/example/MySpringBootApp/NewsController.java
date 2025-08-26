@@ -12,6 +12,6 @@ public class NewsController {
     @GetMapping("/headline")
     @ResponseBody
     public String getLatestBusinessNewsHeadline() {
-        return "Breaking News: Jenkins Pipeline Successfully Deployed Spring Boot Application!";
+        return "Breaking News: Jenkins Pipeline Successfully Deployed Spring Boot Application! This is a new deployment!";
     }
 }
