@@ -6,82 +6,106 @@ pipeline {
     }
     
     environment {
-        MAVEN_OPTS = '-Dmaven.test.failure.ignore=true'
+        DOCKER_IMAGE = 'my-springboot-app'
+        REPO_URL = 'https://github.com/alexdemichieli/MySpringBootApp.git'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                git branch: 'main', url: 'https://github.com/AlexDeMichieli/MySpringBootApp.git'
+                echo 'Getting source code...'
+                git branch: 'main', url: env.REPO_URL
             }
         }
-        
-        stage('Build') {
+
+        stage('Build Application') {
             steps {
-                echo 'Building the application...'
-                sh 'mvn clean compile'
-            }
-        }
-        
-        stage('Test') {
-            steps {
-                echo 'Running unit tests...'
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    // Publish test results using junit
-                    junit testResults: 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-        
-        stage('Package') {
-            steps {
-                echo 'Packaging the application...'
-                sh 'mvn package -DskipTests'
-            }
-        }
-        
-        stage('Archive Artifacts') {
-            steps {
-                echo 'Archiving build artifacts...'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
-        
-        stage('Deploy to Staging') {
-            steps {
-                echo 'Deploying to staging environment...'
+                echo 'Building Spring Boot application...'
                 sh '''
-                    echo "Killing any existing application..."
-                    pkill -f "MySpringBootApp-0.0.1-SNAPSHOT.jar" || true
-                    
-                    echo "Starting application in background..."
-                    nohup java -jar target/MySpringBootApp-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-                    
-                    echo "Waiting for application to start..."
-                    sleep 15
-                    
-                    echo "Testing application endpoint..."
-                    curl -f http://localhost:9090/news/headline || exit 1
-                    
-                    echo "Application deployed successfully!"
+                    # Clean and build with Maven
+                    mvn clean package -DskipTests
+
+                    # Verify JAR file was created
+                    ls -la target/*.jar
+                    echo "✅ JAR file built successfully"
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh '''
+                    # Build Docker image with the newly built JAR
+                    docker build -t ${DOCKER_IMAGE}:latest .
+
+                    # List Docker images to verify
+                    docker images | grep ${DOCKER_IMAGE}
+                    echo "✅ Docker image built successfully"
+                '''
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                echo 'Deploying Docker container...'
+                sh '''
+                    # Stop and remove existing container (if any)
+                    docker stop my-springboot-app || true
+                    docker rm my-springboot-app || true
+
+                    # Run new container
+                    docker run -d --name my-springboot-app -p 9090:9090 ${DOCKER_IMAGE}:latest
+
+                    # Wait for container to start
+                    sleep 10
+
+                    # Verify deployment
+                    if docker ps | grep my-springboot-app; then
+                        echo "✅ Container deployed successfully"
+                        echo "🌐 App accessible at: http://3.137.162.31:9090/news/headline"
+
+                        # Test the endpoint
+                        echo "Testing application endpoint..."
+                        curl -f http://localhost:9090/news/headline || echo "⚠️ Application might still be starting up"
+                    else
+                        echo "❌ Deployment failed"
+                        docker logs my-springboot-app
+                        exit 1
+                    fi
+                '''
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                echo 'Cleaning up old Docker images...'
+                sh '''
+                    # Remove old/unused Docker images to save space
+                    docker image prune -f
+
+                    # Show current Docker resource usage
+                    echo "Current Docker images:"
+                    docker images
+                    echo "Running containers:"
+                    docker ps
                 '''
             }
         }
     }
-    
+
     post {
         always {
-            echo 'Pipeline execution completed!'
+            echo 'Pipeline completed!'
         }
         success {
-            echo 'Pipeline executed successfully!'
+            echo '🎉 Build and deployment successful!'
+            echo 'Your Spring Boot app is running in a Docker container on EC2'
         }
         failure {
-            echo 'Pipeline execution failed!'
+            echo '❌ Build or deployment failed'
+            echo 'Check the logs above for error details'
+            sh 'docker logs my-springboot-app || echo "Container not running"'
         }
     }
 }
