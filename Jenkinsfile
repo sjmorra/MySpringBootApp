@@ -63,7 +63,7 @@ pipeline {
                     # Verify deployment
                     if docker ps | grep my-springboot-app; then
                         echo "✅ Container deployed successfully"
-                        echo "🌐 App accessible at: http://3.137.162.31:9090/news/headline"
+                        echo "🌐 App accessible at: http://18.190.153.42:9090/news/headline"
 
                         # Test the endpoint
                         echo "Testing application endpoint..."

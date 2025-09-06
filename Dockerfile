@@ -3,7 +3,7 @@
   FROM eclipse-temurin:21
 
   # Set metadata for the image to document purpose and maintainer
-  LABEL maintainer="student@example.com"
+  LABEL maintainer="samueljmorra@example.com"
   LABEL description="MySpringBootApp Spring Boot Microservice"
   LABEL version="1.0"
 
