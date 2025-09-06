@@ -7,7 +7,7 @@ pipeline {
     
     environment {
         DOCKER_IMAGE = 'my-springboot-app'
-        REPO_URL = 'https://github.com/alexdemichieli/MySpringBootApp.git'
+        REPO_URL = 'https://github.com/sjmorra/MySpringBootApp.git'
     }
 
     stages {
